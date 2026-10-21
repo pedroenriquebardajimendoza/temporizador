@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Diez</title>
+    <meta name="description" content="Temporizador de 10 minutos. Inicia, pausa y vuelve a empezar." />
+    <meta name="theme-color" content="#f4efe6" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f4efe6;
+        --ink: #1c1915;
+        --muted: #7a7368;
+        --line: #e3d9c8;
+        --card: #fbf7f0;
+        --brass: #8f6b2e;
+        --ember: #b8432f;
+        --track: #e7dfd2;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+      }
+      button { font: inherit; cursor: pointer; }
+      button:disabled { cursor: default; }
+      .wrap {
+        min-height: 100dvh;
+        max-width: 24rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .mark {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--brass);
+      }
+      h1 {
+        margin: 0.5rem 0 0;
+        font-family: Fraunces, ui-serif, Georgia, serif;
+        font-weight: 560;
+        font-size: 1.5rem;
+        line-height: 1.2;
+      }
+      .dial {
+        position: relative;
+        width: 18rem;
+        height: 18rem;
+        margin-top: 2.5rem;
+        display: grid;
+        place-items: center;
+      }
+      svg { width: 18rem; height: 18rem; }
+      .arc { transition: stroke-dashoffset 180ms linear, stroke 240ms ease; }
+      @media (prefers-reduced-motion: reduce) {
+        .arc { transition: none; }
+      }
+      .face {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .clock {
+        margin: 0;
+        font-family: Fraunces, ui-serif, Georgia, serif;
+        font-size: 3.75rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .status { margin: 0.75rem 0 0; font-size: 0.875rem; color: var(--muted); }
+      .urgent { color: var(--ember); }
+      .actions {
+        margin-top: 2.5rem;
+        display: flex;
+        gap: 0.75rem;
+        width: 100%;
+        justify-content: center;
+      }
+      .btn {
+        height: 3.5rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0 1.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .primary { background: var(--ink); color: var(--paper); min-width: 9rem; }
+      .ghost { background: var(--card); color: var(--ink); border-color: var(--line); }
+      .hint {
+        margin: 2rem 0 0;
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-align: center;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      @media (max-width: 639px) {
+        .hint { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <p class="mark">Diez</p>
+      <h1>Temporizador</h1>
+      <div class="dial">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="46" fill="none" stroke="#e7dfd2" stroke-width="4"></circle>
+          <circle
+            id="arc"
+            class="arc"
+            cx="60"
+            cy="60"
+            r="46"
+            fill="none"
+            stroke="#8f6b2e"
+            stroke-width="4"
+            stroke-linecap="round"
+            transform="rotate(-90 60 60)"
+          ></circle>
+        </svg>
+        <div class="face">
+          <p id="clock" class="clock" aria-hidden="true">10:00</p>
+          <p id="status" class="status">Diez minutos</p>
+        </div>
+      </div>
+      <p id="live" class="sr" role="status">Diez minutos. Quedan 10:00.</p>
+      <div class="actions">
+        <button id="reset" class="btn ghost" type="button" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+            <path d="M3 4v5h5"></path>
+          </svg>
+          Reiniciar
+        </button>
+        <button id="primary" class="btn primary" type="button">
+          <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+          <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden>
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z"></path>
+          </svg>
+          <span id="primary-label">Iniciar</span>
+        </button>
+      </div>
+      <p class="hint">Espacio para iniciar o pausar. R para reiniciar.</p>
+    </main>
+    <script>
+      const TOTAL = 10 * 60 * 1000;
+      const C = 2 * Math.PI * 46;
+      const KEY = "diez-10";
+      const arc = document.getElementById("arc");
+      const clockEl = document.getElementById("clock");
+      const statusEl = document.getElementById("status");
+      const liveEl = document.getElementById("live");
+      const primary = document.getElementById("primary");
+      const primaryLabel = document.getElementById("primary-label");
+      const resetBtn = document.getElementById("reset");
+      const iconPlay = document.getElementById("icon-play");
+      const iconPause = document.getElementById("icon-pause");
+      arc.style.strokeDasharray = String(C);
+
+      let phase = "idle";
+      let remaining = TOTAL;
+      let endAt = null;
+      let timer = 0;
+      let audio = null;
+      let shouldChime = false;
+      let wakeLock = null;
+
+      function format(ms) {
+        const totalSec = Math.ceil(Math.max(0, ms) / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      }
+
+      function paint() {
+        const clock = format(remaining);
+        const urgent = phase !== "idle" && remaining > 0 && remaining <= 60000;
+        const finished = phase === "done";
+        const status =
+          phase === "running" ? (urgent ? "Último minuto" : "En curso")
+          : phase === "paused" ? "En pausa"
+          : phase === "done" ? "Tiempo cumplido"
+          : "Diez minutos";
+        clockEl.textContent = clock;
+        statusEl.textContent = status;
+        clockEl.classList.toggle("urgent", urgent || finished);
+        arc.style.stroke = urgent || finished ? "#b8432f" : "#8f6b2e";
+        arc.style.strokeDashoffset = String(C * (1 - remaining / TOTAL));
+        liveEl.textContent = status + ". Quedan " + clock + ".";
+        document.title = phase === "idle" ? "Diez" : clock + " · Diez";
+        const running = phase === "running";
+        primaryLabel.textContent =
+          running ? "Pausar" : phase === "paused" ? "Continuar" : phase === "done" ? "Otra vez" : "Iniciar";
+        iconPlay.hidden = running;
+        iconPause.hidden = !running;
+        resetBtn.hidden = phase === "idle";
+      }
+
+      function persist() {
+        localStorage.setItem(KEY, JSON.stringify({ phase, remaining, endAt }));
+      }
+
+      function ensureAudio() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        if (!audio || audio.state === "closed") audio = new Ctx();
+        if (audio.state === "suspended") audio.resume();
+        return audio;
+      }
+
+      function chime(ctx) {
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          const start = now + i * 0.16;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.09, start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.85);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.9);
+        });
+      }
+
+      async function holdScreen() {
+        if (!navigator.wakeLock) return;
+        try { wakeLock = await navigator.wakeLock.request("screen"); } catch { wakeLock = null; }
+      }
+
+      function releaseScreen() {
+        if (wakeLock) wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+
+      function finish() {
+        clearInterval(timer);
+        endAt = null;
+        remaining = 0;
+        phase = "done";
+        releaseScreen();
+        if (shouldChime && audio) chime(audio);
+        shouldChime = false;
+        if (navigator.vibrate) navigator.vibrate([70, 40, 70, 40, 140]);
+        paint();
+        persist();
+      }
+
+      function tick() {
+        remaining = Math.max(0, endAt - Date.now());
+        if (remaining <= 0) finish();
+        else { paint(); persist(); }
+      }
+
+      function start() {
+        ensureAudio();
+        const base = phase === "paused" ? remaining : TOTAL;
+        endAt = Date.now() + base;
+        remaining = base;
+        phase = "running";
+        shouldChime = true;
+        clearInterval(timer);
+        timer = setInterval(tick, 100);
+        holdScreen();
+        paint();
+        persist();
+      }
+
+      function pause() {
+        clearInterval(timer);
+        remaining = Math.max(0, (endAt || Date.now()) - Date.now());
+        endAt = null;
+        phase = "paused";
+        releaseScreen();
+        paint();
+        persist();
+      }
+
+      function reset() {
+        clearInterval(timer);
+        endAt = null;
+        remaining = TOTAL;
+        phase = "idle";
+        shouldChime = false;
+        releaseScreen();
+        paint();
+        persist();
+      }
+
+      function restore() {
+        try {
+          const data = JSON.parse(localStorage.getItem(KEY) || "null");
+          if (!data) return;
+          if (data.phase === "running" && data.endAt) {
+            const left = data.endAt - Date.now();
+            if (left <= 0) { phase = "done"; remaining = 0; endAt = null; }
+            else { phase = "running"; remaining = left; endAt = data.endAt; shouldChime = true; timer = setInterval(tick, 100); holdScreen(); }
+          } else if (data.phase === "paused") {
+            phase = "paused";
+            remaining = Math.min(TOTAL, Math.max(0, data.remaining));
+          } else if (data.phase === "done") {
+            phase = "done";
+            remaining = 0;
+          }
+        } catch {}
+      }
+
+      primary.addEventListener("click", () => (phase === "running" ? pause() : start()));
+      resetBtn.addEventListener("click", reset);
+      window.addEventListener("keydown", (event) => {
+        const tag = event.target && event.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (event.code === "Space") { event.preventDefault(); phase === "running" ? pause() : start(); }
+        else if (event.key === "r" || event.key === "R") reset();
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && phase === "running") holdScreen();
+      });
+
+      restore();
+      paint();
+    </script>
+  </body>
+</html>
