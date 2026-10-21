@@ -1,7 +1,7 @@
 # Diez
 
-Temporizador de 10 minutos. Abre `index.html`: iniciar, pausar y reiniciar.
+Temporizador de 10 minutos.
 
-Para la web en GitHub Pages, en este repo entra a **Settings → Pages**, elige la rama `main` y la carpeta `/ (root)`, y guarda.
+Web: https://future-lawyer-3b933.ship.place/
 
-https://pedroenriquebardajimendoza.github.io/temporizador/
+El código está en este repo. GitHub Pages no está activado.
